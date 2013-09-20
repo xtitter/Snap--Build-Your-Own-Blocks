@@ -944,6 +944,12 @@ SpriteMorph.prototype.initBlocks = function () {
             spec: '%txtfun of %s',
             defaults: [null, "Abelson & Sussman"]
         },
+        doJSEval: {  // NATE, dev mode
+        	type: 'command',
+        	category: 'operators',
+        	spec: 'JS eval %s',
+        	defaults: ["alert(\"hi\")"]
+        },
 
     /*
         reportScript: {
@@ -1761,6 +1767,7 @@ SpriteMorph.prototype.blockTemplates = function (category) {
             blocks.push('-');
             blocks.push(block('reportTypeOf'));
             blocks.push(block('reportTextFunction'));
+            blocks.push(block('doJSEval'));
         }
 
     /////////////////////////////////
@@ -4398,6 +4405,7 @@ StageMorph.prototype.blockTemplates = function (category) {
             blocks.push('-');
             blocks.push(block('reportTypeOf'));
             blocks.push(block('reportTextFunction'));
+            blocks.push(block('doJSEval'));
         }
 
     //////////////////////////////////
