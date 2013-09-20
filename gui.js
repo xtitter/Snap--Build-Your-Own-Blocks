@@ -2339,11 +2339,11 @@ IDE_Morph.prototype.projectMenu = function () {
         function () {
             // read a list of libraries from an external file,
             var libMenu = new MenuMorph(this, 'Import library'),
-                libUrl = 'http://snap.berkeley.edu/snapsource/libraries/' +
+                libUrl = 'libraries/' +
                     'LIBRARIES';
 
             function loadLib(name) {
-                var url = 'http://snap.berkeley.edu/snapsource/libraries/'
+                var url = 'libraries/'
                         + name
                         + '.xml';
                 myself.droppedText(myself.getURL(url), name);
