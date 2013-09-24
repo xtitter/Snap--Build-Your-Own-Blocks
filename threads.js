@@ -2390,6 +2390,75 @@ Process.prototype.reportTimer = function () {
     return 0;
 };
 
+
+// JS Eval
+Process.prototype.doJSEval = function(string) {
+	var str = (string || '').toString(), ret;
+	try {
+		ret = eval(str);
+	} catch (err) {
+		ret = err.toString();
+	}
+	return ret;
+}
+
+
+// Google Graphing code, what fun
+
+// chart container stuff probably goes elsewhere?
+function ChartContainer() {
+	this.win;
+}
+ChartContainer.newContainer = function() {
+	var temp;
+	var url = window.location.href;
+	if (( temp = url.indexOf("#")) != -1) {
+		// got some weird load fragment, as snap often does!
+		url = url.slice(0, temp);
+	}
+	if (( temp = url.indexOf("?")) != -1) {
+		url = url.slice(0, temp);
+	}
+	url = url.slice(0, url.lastIndexOf("/")) + "/chart-container.html";
+	ChartContainer.win = window.open(url, "_blank");
+}
+
+
+ChartContainer.show = function() {
+	// probably should save all the graphs, so can rebuild the page if necessary?
+	if (ChartContainer.win === undefined) {
+		// first time
+		ChartContainer.newContainer();
+	} else if (!ChartContainer.win.window) {
+		// it got closed
+		ChartContainer.newContainer();
+		//load up earlier graphs?
+	}
+	//ChartContainer.tab.scrollDown();
+	ChartContainer.win.focus();
+}
+
+Process.prototype.doAddScatterPlotXlistYlist = function(x_list, x_title, y_list, y_title) {
+	var xt = (x_title || '').toString();
+	var yt = (y_title || '').toString();
+	ChartContainer.show();
+	ChartContainer.win.addScatterPlot_xlist_ylist(x_list, y_list, xt, yt);
+}
+
+Process.prototype.doAddScatterPlotFromMatrix = function(matrix, x_index, x_title, y_index, y_title) {
+	// someday 
+	var xt = (x_title || '').toString();
+	var yt = (y_title || '').toString();
+	ChartContainer.show();	
+	ChartContainer.win.addScattPlot_matrix_xind_ying(matrix, x_index, y_index, xt, yt);
+}
+
+Process.prototype.doHistogram = function(list, title) {
+	var t = (title || '').toString();
+	ChartContainer.show();
+	ChartContainer.addHistogram(list, t);	
+}
+
 // Process code mapping
 
 /*

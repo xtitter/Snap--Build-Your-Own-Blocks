@@ -28,20 +28,17 @@ window.onbeforeunload = function(evt) {
 ///////////////////////////
 //  COMMON 
 
-// get id of next chart to be drawn
-
-function Chart() {
-	this.chart_index = 1;
-	
-}
+//f javascript stupid closures stupid language stupid
+var Chart = {};
+Chart.chart_index = 1;
 
 Chart.getNextIndex = function() {
-		return chart_index++;
+		return this.chart_index++;
 	}
 
 
 Chart.newChartDiv = function() {
-	var new_id = "chart" + Data.chartIndex++;
+	var new_id = "chart_" + this.getNextIndex();
 	document.getElementById('chart-container').innerHTML = document.getElementById('chart-container').innerHTML + '<div id="' + new_id + '" class="chart"></div>';
 	return new_id;
 }
@@ -54,9 +51,8 @@ Chart.scrollDown = function() {
 /////////////////////////////
 /// SCATTERPLOT
 
-// matrix is an array of row-arrays.
-// if the first row-array is column headers, hasHeaders should be true
-addScattPlot_matrix_xind_ying = function(matrix, x_index, y_index, x_name, y_name) {
+
+addScattPlot_matrix_xind_yind = function(matrix, x_index, y_index, x_title, y_title) {
 	
 	var gDataTable = google.visualization.arrayToDataTable(matrix, !hasHeaders);
 
@@ -75,30 +71,65 @@ addScattPlot_matrix_xind_ying = function(matrix, x_index, y_index, x_name, y_nam
 
 }
 
+
+addScatterPlot_xlist_ylist = function(x_list, y_list, x_title, y_title) {
+	var x_header = x_title || "X axis";
+	var y_header = y_title || "Y axis";
+	var data = new google.visualization.DataTable();
+	var i, n_included, n_ignored, minlen, options, chart, tempx, tempy, legend = '';
+
+	// TODO do this conditionally whether its a list or an array, for efficiency
+	x_list.becomeArray();
+	y_list.becomeArray();
+	minlen = Math.min(x_list.length(), y_list.length());
+
+	data.addColumn('number', x_header);
+	data.addColumn('number', y_header);
+	
+	n_included = 0;
+	n_ignored = 0
+	for ( i = 0; i < minlen; i++) {
+		tempx = parseInt(x_list.at(i+1));
+		tempy = parseInt(y_list.at(i+1));
+		if (tempx == NaN || tempy == NaN) {
+			n_ignored++;
+		} else {
+			data.addRow([tempx, tempy]);
+			n_included++;
+		}
+	}
+	
+	legend = n_included + " datapoints in graph";
+	if (n_ignored != 0) {
+		legend += "; " + n_ignored + " datapoints exluded.";
+	}
+	
+	chartid = Chart.newChartDiv();
+	Chart.Scatterplot.add(data, chartid, x_header, y_header, legend);
+}
+
+
+
 ///////////
 
 Chart.Scatterplot = {};
 
-// should fix this to take care to not generate garbage or needlessly duplicate lists
-//  -- that is, do something smart while input columns are linked lists
-// we only go as far as the shortest list -- and don't return an error if they are of uneven length
-Chart.ScatterPlot.addScatterPlot_TwoLists = function(x_list, y_list) {
-	var x_header = "X axis";
-	var y_header = "Y axis";
-	var matrix = [x_header, y_header], i, minlen;
 
-	x_list.becomeArray();
-	y_list.becomeArray();
-	minlen = min(x_list.length(), y_list.length());
-	matrix[minlen] = undefined;
-	// make array long enough to hold contents and headers
-	for ( i = 0; i < minlen; i++) {
-		matrix[i + 1] = [x_list.at(i), y_list.at(i)];
+
+Chart.Scatterplot.add = function(data, chartid, x_title, y_title, chart_legend) {
+	var options;
+	if (!chart_legend || chart_legend == '') {
+		chart_legend = 'none';
 	}
-	
-	CC.win.addScatterPlot(matrix, true)
+	options = {
+		title: "Chart " + chartid.substring(6),       
+		hAxis: {title: x_title},
+		vAxis: {title: y_title},
+		legend: chart_legend
+	}
+	var c = new google.visualization.ScatterChart(document.getElementById(chartid));
+	c.draw(data, options);
 }
-
 
 
 
@@ -108,8 +139,7 @@ Chart.ScatterPlot.addScatterPlot_TwoLists = function(x_list, y_list) {
 /// HISTOGRAM
 
 
-addHistogram = function(matrix, hasHeaders) {
-	hasHeaders = typeof hasHeaders !== 'undefined' ? hasHeaders : true;
+addHistogram = function(lst) {
 	var id = newChartDiv();
 
 }

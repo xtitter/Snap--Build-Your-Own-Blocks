@@ -399,6 +399,7 @@ SpriteMorph.prototype.initBlocks = function () {
             spec: 'console log %mult%s'
         },
 
+
         // Sound
         playSound: {
             type: 'command',
@@ -944,12 +945,6 @@ SpriteMorph.prototype.initBlocks = function () {
             spec: '%txtfun of %s',
             defaults: [null, "Abelson & Sussman"]
         },
-        doJSEval: {  // NATE, dev mode
-        	type: 'command',
-        	category: 'operators',
-        	spec: 'JS eval %s',
-        	defaults: ["alert(\"hi\")"]
-        },
 
     /*
         reportScript: {
@@ -1050,6 +1045,34 @@ SpriteMorph.prototype.initBlocks = function () {
             spec: 'replace item %idx of %l with %s',
             defaults: [1, null, localize('thing')]
         },
+        
+        // JS Eval, for fun.  Should take variables maybe
+        doJSEval: {  
+        	type: 'command',
+        	category: 'operators',
+        	spec: 'JS eval %s',
+        	defaults: ["alert(\"hi\")"]
+        },
+        
+        
+		// frontend to Google Chart, experimental
+		doAddScatterPlotXlistYlist: {
+			type: 'command',
+			category: 'other',
+			spec: 'Add ScatterPlot of %l named %s by %l named %s'
+		},
+		doAddScatterPlotFromMatrix: {
+			type: 'command',
+			category: 'other',
+			spec: 'Add ScatterPlot using %l with index %n named %s by index %n named %s'	
+		},
+		doAddHistogram: {
+			type: 'command',
+			category: 'other',
+			spec: 'Add Histogram of %l named %s'
+		},
+	
+
 
         // Code mapping - experimental
         doMapCodeOrHeader: { // experimental
@@ -1318,7 +1341,6 @@ SpriteMorph.prototype.drawNew = function () {
 
         // adjust my position to the rotation
         this.setCenter(currentCenter, true); // just me
-
         // determine my rotation offset
         this.rotationOffset = shift
             .translateBy(pic.rotationCenter)
@@ -1581,6 +1603,10 @@ SpriteMorph.prototype.blockTemplates = function (category) {
             blocks.push('-');
             blocks.push(block('log'));
             blocks.push(block('alert'));
+            blocks.push('-');
+            blocks.push(block('doAddScatterPlotXlistYlist'));
+            blocks.push(block('doAddScatterPlotFromMatrix'));
+            blocks.push(block('doAddHistogram'));
         }
 
     /////////////////////////////////
@@ -4240,6 +4266,10 @@ StageMorph.prototype.blockTemplates = function (category) {
             blocks.push('-');
             blocks.push(block('log'));
             blocks.push(block('alert'));
+            blocks.push('-');
+            blocks.push(block('doAddScatterPlotXlistYlist'));
+            blocks.push(block('doAddScatterPlotFromMatrix'));
+            blocks.push(block('doAddHistogram'));
         }
 
     /////////////////////////////////
