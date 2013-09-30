@@ -1046,32 +1046,49 @@ SpriteMorph.prototype.initBlocks = function () {
             defaults: [1, null, localize('thing')]
         },
         
-        // JS Eval, for fun.  Should take variables maybe
-        doJSEval: {  
+        
+        // Plugin stuff
+        reportRequirePlugin: {  
+        	type: 'reporter',
+        	category: 'operators',
+        	spec: 'Require Plugin %s'
+        },
+        doJSApply: {  
         	type: 'command',
         	category: 'operators',
-        	spec: 'JS eval %s',
-        	defaults: ["alert(\"hi\")"]
+        	spec: 'Plugin %s apply %s'
         },
         
         
 		// frontend to Google Chart, experimental
-		doAddScatterPlotXlistYlist: {
-			type: 'command',
-			category: 'other',
-			spec: 'Add ScatterPlot of %l named %s by %l named %s'
+		// these blocks should move to XML file, to be written as 
+		// calls to local plugin and JSApply
+		reportScatterPlotXlistYlist: {
+			type: 'reporter',
+			category: 'looks',
+			spec: 'ScatterPlot hor: %l vert: %l'
+		},	
+		reportHistogram: {
+			type: 'reporter',
+			category: 'looks',
+			spec: 'Histogram of %l'
 		},
-		doAddScatterPlotFromMatrix: {
-			type: 'command',
-			category: 'other',
-			spec: 'Add ScatterPlot using %l with index %n named %s by index %n named %s'	
+		reportBarChart: {
+			type: 'reporter',
+			category: 'looks',
+			spec: 'Bar Chart of %l'
 		},
-		doAddHistogram: {
+		doAddChartOption: {
 			type: 'command',
-			category: 'other',
-			spec: 'Add Histogram of %l named %s'
+			category: 'looks',
+			spec: 'Add Option to Chart %s key: %s value: %s'
 		},
-	
+		doDrawChart: {
+			type: 'command',
+			category: 'looks',
+			spec: 'Draw Chart %s'
+		},
+		
 
 
         // Code mapping - experimental
@@ -1589,6 +1606,12 @@ SpriteMorph.prototype.blockTemplates = function (category) {
         blocks.push('-');
         blocks.push(block('comeToFront'));
         blocks.push(block('goBack'));
+        blocks.push('-');
+        blocks.push(block('reportScatterPlotXlistYlist'));
+        blocks.push(block('reportHistogram'));
+        blocks.push(block('reportBarChart'));
+        blocks.push(block('doAddChartOption'));
+        blocks.push(block('doDrawChart'));
 
     // for debugging: ///////////////
 
@@ -1603,10 +1626,6 @@ SpriteMorph.prototype.blockTemplates = function (category) {
             blocks.push('-');
             blocks.push(block('log'));
             blocks.push(block('alert'));
-            blocks.push('-');
-            blocks.push(block('doAddScatterPlotXlistYlist'));
-            blocks.push(block('doAddScatterPlotFromMatrix'));
-            blocks.push(block('doAddHistogram'));
         }
 
     /////////////////////////////////
@@ -1793,7 +1812,8 @@ SpriteMorph.prototype.blockTemplates = function (category) {
             blocks.push('-');
             blocks.push(block('reportTypeOf'));
             blocks.push(block('reportTextFunction'));
-            blocks.push(block('doJSEval'));
+            blocks.push(block('reportRequirePlugin'));
+            blocks.push(block('doJSApply'));
         }
 
     /////////////////////////////////
@@ -4252,6 +4272,12 @@ StageMorph.prototype.blockTemplates = function (category) {
         blocks.push(block('changeEffect'));
         blocks.push(block('setEffect'));
         blocks.push(block('clearEffects'));
+        blocks.push('-');
+        blocks.push(block('reportScatterPlotXlistYlist'));
+        blocks.push(block('reportHistogram'));
+        blocks.push(block('reportBarChart'));
+        blocks.push(block('doAddChartOption'));
+        blocks.push(block('doDrawChart'));
 
     // for debugging: ///////////////
 
@@ -4266,10 +4292,6 @@ StageMorph.prototype.blockTemplates = function (category) {
             blocks.push('-');
             blocks.push(block('log'));
             blocks.push(block('alert'));
-            blocks.push('-');
-            blocks.push(block('doAddScatterPlotXlistYlist'));
-            blocks.push(block('doAddScatterPlotFromMatrix'));
-            blocks.push(block('doAddHistogram'));
         }
 
     /////////////////////////////////
@@ -4435,7 +4457,8 @@ StageMorph.prototype.blockTemplates = function (category) {
             blocks.push('-');
             blocks.push(block('reportTypeOf'));
             blocks.push(block('reportTextFunction'));
-            blocks.push(block('doJSEval'));
+            blocks.push(block('reportRequirePlugin'));
+            blocks.push(block('doJSApply'));
         }
 
     //////////////////////////////////

@@ -18,6 +18,18 @@
 		<script type="text/javascript" src="locale.js"></script>
 		<script type="text/javascript" src="cloud.js"></script>
 		<script type="text/javascript" src="sha512.js"></script>
+		
+		<!-- plugins stuff 
+		objects.js has been modified, 2 blocks added  -->
+        <script type="text/javascript" src="require.js"></script>		
+		<script type="text/javascript" src="plugins/plugin.js"></script>
+		
+		<!-- data stuff 
+		objects.js has been modified -- eventually, this will be a plugin tho -->
+        <script type="text/javascript" src="plugins/charts/charts-plugin.js"></script>
+		
+		
+		
 		<script type="text/javascript">
 			var world;
 			window.onload = function () {
@@ -31,6 +43,6 @@
 		</script>
 	</head>
 	<body style="margin: 0;">
-		<canvas id="world" tabindex="1" style="position: absolute;" />
+		<canvas id="world" tabindex="1" style="position: absolute;"></canvas>
     </body>
 </html>
