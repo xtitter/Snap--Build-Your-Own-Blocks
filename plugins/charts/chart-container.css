@@ -31,7 +31,7 @@ body {
 }
 
 
-.chart {
+.chart-wrapper {
 	padding: 5%;
 	background-color: white;
 	border-width: 1px;
@@ -39,5 +39,8 @@ body {
 	border-style: solid;
 	margin: 15px;
 	width: 85%;
+}
+
+.chart {
 	height: 480px;
 }

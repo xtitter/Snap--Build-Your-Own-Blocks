@@ -45,15 +45,6 @@ Charts.showContainer = function() {
 }
 
 
-Charts.addOption = function(chartid, key, value) {
-	alert('addOption ' + chartid + " key " + key + " value " + value);	 
-}
-
-
-Charts.drawChart = function(chartid) {
-	alert('drawchart ' + chartid);
-}
-
 
 
 ///////////////
@@ -80,7 +71,7 @@ Process.prototype.reportBarChart = function(list) {
 }
 
 Process.prototype.doAddChartOption = function(chartid, key, value) {
-	Charts.addOption(chartid, key, value)
+	Charts.addChartOption(chartid, key, value)
 }
 
 Process.prototype.doDrawChart = function(chartid) {
@@ -89,6 +80,21 @@ Process.prototype.doDrawChart = function(chartid) {
 
 
 
+//////
+
+
+
+Charts.addChartsOption = function(chartid, key, value) {
+	// is chartid valid?
+	
+	Charts.showContainer();
+	alert('addOption ' + chartid + " key " + key + " value " + value);	 
+}
+
+
+Charts.drawChart = function(chartid) {
+	alert('drawchart ' + chartid);
+}
 
 
 
