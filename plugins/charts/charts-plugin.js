@@ -48,7 +48,7 @@ Charts.showContainer = function() {
 //  we need to do this the snap way, eventually.
 Charts.call_when_initialized = function(callback) {
 	// invoke callback when google has loaded is true;
-	if (Charts.win) {
+	if (Charts.win && Charts.win.ChartUtil && Charts.win.ChartUtil.isInitialized) {
 		//Charts.win.ChartUtil.initialize();
 		if (Charts.win.ChartUtil.isInitialized()) {
 			return callback.call();
@@ -59,7 +59,6 @@ Charts.call_when_initialized = function(callback) {
 			return ("Chart_" + Charts.win.ChartUtil.next_chart_id);
 		}
 	} else {
-		// this shouldn't ever happen, if showContainer() was call first 
 		throw Error ("Please try again; the Chart window hasn't loaded yet'.'")
 	}
 }
