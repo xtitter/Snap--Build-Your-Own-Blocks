@@ -1,16 +1,46 @@
 ////////////////////////////////
 // SETUP
 
-// Load the Visualization API
-google.load('visualization', '1.0', {
-	'packages' : ['corechart']
-});
 
-google.setOnLoadCallback(init);
+var ChartUtil = {};
 
-function init() {
-	// probably should do something here -- this is triggered when charts can be drawn
+ChartUtil.is_google_loaded = false;	
+
+ChartUtil.registerInit = function() {
+		// probably should do something here -- this is triggered when charts can be drawn
+		ChartUtil.is_google_loaded = true;
+		}
+
+ChartUtil.isInitialized = function() {
+		return ChartUtil.is_google_loaded;
+	}
+
+
+// this gets called multiple times.  OK?
+ChartUtil.initialize = function() {
+	// Load the Visualization API
+	google.load('visualization', '1.0', {
+		'packages' : ['corechart']
+	});
+
+	google.setOnLoadCallback(ChartUtil.registerInit);
+	
 }
+
+// lets do this
+ChartUtil.initialize();
+
+
+
+
+
+//I gave in and made this global...  I was raised wrong, maybe.  but, f javascript oop
+// evilly referenced in Charts.call_when_initialized() right now
+ChartUtil.next_chart_id = 1;
+var getNextChartId = function() {
+	return ("Chart_" + (ChartUtil.next_chart_id)++);
+}
+
 
 // Warns user about closing tab
 // borrowed from morphic.js -- not instantiated on morphic.js load, so we'll call it here
@@ -23,14 +53,6 @@ window.onbeforeunload = function(evt) {
 	// For Safari / chrome
 	return msg;
 };
-
-
-//I gave in and made this global...  I was raised wrong, maybe.  but, f javascript oop
-var next_chart_id = 1;
-var getNextChartId = function() {
-	// sigh... increment precedence over inheritance? 
-	return ("Chart_" + (this.next_chart_id)++);
-}
 
 
 
@@ -105,15 +127,17 @@ ChartType.prototype.getChartId = function() {
 ChartType.prototype.makeChartDiv = function(title, caption) {
 	var title_div = "";
 	var caption_div = "";
+	var anchor;
 	var chart_div;
 
+	anchor = '<a href="#' + this.getChartId() + '"></> '
 	if (title) {
 		title_div = ' <div class="title">' + title + '</div> ';
 	}
 	if (caption) {
 		caption_div = ' <div class="caption">' + caption + '</div> ';
 	}
-	chart_div = '<div class="chart-wrapper"> ' + title_div + '<div id="' + this.getChartId() + '" class="chart"></div> ' + caption_div + ' </div>';
+	chart_div = '<div class="chart-wrapper"> ' + anchor + title_div + '<div id="' + this.getChartId() + '" class="chart"></div> ' + caption_div + ' </div>';
 	document.getElementById('chart-container').innerHTML = document.getElementById('chart-container').innerHTML + chart_div;
 }
 
@@ -146,15 +170,16 @@ ChartType.prototype.isNumber = function(n) {
 
 
 //// g_chart
+// unused?
 
 
 ChartType.prototype.g_chart = undefined;
 
-ChartType.prototype.setGChart(g_chart) {
+ChartType.prototype.setGChart = function(g_chart) {
 	this.g_chart = g_chart;
 }
 
-ChartType.prototype.getGChart() {
+ChartType.prototype.getGChart = function() {
 	if (this.g_chart === undefined || this.g_chart === null) {
 		throw Error("uh oh: google chart hasn't been made yet");
 	}
@@ -165,8 +190,10 @@ ChartType.prototype.getGChart() {
 
 //////
 
+// also scrolls to anchor div
 ChartType.prototype.draw = function() {
 	var opts = this.getOptions();
+	window.location.hash = '#' + this.getChartId();
 	if (this.g_datatable !== undefined && this.g_chart !== undefined) {
 		this.g_chart.draw(this.g_datatable, opts);
 	}
@@ -207,7 +234,7 @@ function Scatterplot(x_list, y_list) {
 	this.chartDiv = this.makeChartDiv(null, this.caption);
 
 	this.g_chart = null;   // do I need this?  huh?
-	setGChart(google.visualization.ScatterChart(document.getElementById(this.chartid)) );
+	this.setGChart(new google.visualization.ScatterChart(document.getElementById(this.chartid)) );
 	this.draw();
 };
 
@@ -273,10 +300,11 @@ Scatterplot.prototype.getInitialOptions = function() {
 ///////////////////////////////////
 /// HISTOGRAM
 
-reportHistogram = function(lst) {
-	var id = newChartDiv();
-
+reportHistogram = function(list) {
+	var h = new Histogram(list);
+	return h.getChartId();
 }
+
 
 
 function Histogram(list) {
@@ -295,7 +323,7 @@ function Histogram(list) {
 	this.chartDiv = this.makeChartDiv(null, this.caption);
 
 	this.g_chart = null;   // do I need this?  huh?
-	setGChart(google.visualization.ColumnChart(document.getElementById(this.chartid)) );
+	this.setGChart(new google.visualization.ColumnChart(document.getElementById(this.chartid)) );
 	this.draw();
 };
 
@@ -317,7 +345,7 @@ Histogram.prototype.makeGDataTable = function() {
 	var bincounts = [];
 	var i, temp, n_included=0, n_excluded=0;
 
-	g_datatable.addColumn('number', 'Values');
+	g_datatable.addColumn('string', 'Values');
 	g_datatable.addColumn('number', this.col['header']);
 	
 	// get a copy, parse as numbers, remove non-numbers
@@ -340,7 +368,7 @@ Histogram.prototype.makeGDataTable = function() {
 	var mid_index = ((sorted.length / 2) - 0.5);
 	var q1_index = mid_index/2;
 	var q3_index = mid_index + q1_index;
-	var iqr = this.get_indexed_value(sorted, q1_index) - this.get_indexed_value(sorted, q3_index) ;
+	var iqr = this.get_indexed_value(sorted, q3_index) - this.get_indexed_value(sorted, q1_index) ;
 	var binwidth = (2 * iqr * Math.pow(arr.length, (-1/3)));
 	//binwidth = Math.floor(binwidth) + 1;  // bad for small numbers!
 	var range = (sorted[sorted.length - 1] - sorted[0]);
@@ -367,7 +395,7 @@ Histogram.prototype.makeGDataTable = function() {
 	}
  	
 	for (i=0; i<numbins; i++) {
-		g_datatable.addRow([ "[" + binranges[i] + "--)", bincounts[i]]);
+		g_datatable.addRow([ "[ " + binranges[i] + " -- " + (binranges[i] + binwidth) + " )", bincounts[i]]);
 	}
 	
 	return g_datatable;
@@ -376,7 +404,7 @@ Histogram.prototype.makeGDataTable = function() {
 
 // gets possibly interpolated value for possibly non-integer indexes.
 // index must be in range, yo
-Histogram.prototype.get_indexed_value(arr, ind) {
+Histogram.prototype.get_indexed_value = function(arr, ind) {
 	if (Math.floor(ind) == ind) {
 		// integer index, woot
 		return arr[Math.floor(ind)];
@@ -389,17 +417,17 @@ Histogram.prototype.get_indexed_value(arr, ind) {
 
 
 
-Scatterplot.prototype.getCaption = function() {
+Histogram.prototype.getCaption = function() {
 	return ("<div>(" + this.n_included + " datapoints in graph; " + this.n_excluded + " datapoints exluded. )</div>");
 }
 
 
-Scatterplot.prototype.getInitialOptions = function() {
+Histogram.prototype.getInitialOptions = function() {
 	// will these be set in the prototype?  hope not
 	var opt = {};
 	opt['title'] = "Chart " + this.chartid.substring(6);  // no ha
 	opt['hAxis'] = {title: this.col['header']};
-	opt['bar'] = {groupwidth: '99%' };
+	opt['bar'] = {groupWidth: '99%' };
 
 	return opt;
 }
@@ -408,6 +436,41 @@ Scatterplot.prototype.getInitialOptions = function() {
 
 ////////////
 
-reportBarChart = function(lst) {
-
+reportBarChart = function(lol) {
+	var bc = new BarChart(lol);
+	return bc.getChartId();
 }
+
+
+
+function BarChart(lol) {
+	var i;
+
+	this.chartid = getNextChartId();
+
+	// these are objects with 'header' and 'values' fields
+	var cs = lol.asArray();
+	for (i = 0; i<cs.length; i++) {
+		cs[i] = this.processColumn(cs[i]);
+	}
+	this.cols_array = cs;
+	throw Error("Bar Chart not yet implemented");
+
+	//this.n_excluded = 0;
+	//this.n_included = 0;
+	//this.g_datatable = this.makeGDataTable();
+
+	//this.caption = this.getCaption();
+	//this.options = this.getInitialOptions();
+	//this.chartDiv = this.makeChartDiv(null, this.caption);
+
+	//this.g_chart = null;   // do I need this?  huh?
+	//this.setGChart(new google.visualization.ColumnChart(document.getElementById(this.chartid)) );
+	//this.draw();
+};
+
+
+
+//////////
+/// 
+BarChart.prototype = new ChartType('BarChart');

@@ -1076,7 +1076,7 @@ SpriteMorph.prototype.initBlocks = function () {
 		reportBarChart: {
 			type: 'reporter',
 			category: 'looks',
-			spec: 'Bar Chart of %l'
+			spec: 'Bar Chart of %mult%l'
 		},
 		doAddChartOption: {
 			type: 'command',

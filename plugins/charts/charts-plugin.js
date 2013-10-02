@@ -44,56 +44,34 @@ Charts.showContainer = function() {
 	this.win.focus();
 }
 
-
-
-
-///////////////
-// from threads.js -- to be removed when these are custom blocks
-//   hitting JSApply
-
-Process.prototype.reportScatterPlotXlistYlist = function(x_list, y_list) {
-	var chartid;
-	Charts.showContainer();
-	chartid = Charts.win.reportScatterPlotXlistYlist(x_list, y_list);
-	return chartid;
-}
-
-Process.prototype.reportHistogram = function(list) {
-	Charts.showContainer();
-	var chartid = Charts.win.addHistogram(list);
-	return chartid;
-}
-
-Process.prototype.reportBarChart = function(list) {
-	Charts.showContainer();
-	var chartid = Charts.win.addBarChart(list);
-	return chartid;
-}
-
-Process.prototype.doAddChartOption = function(chartid, key, value) {
-	Charts.addChartOption(chartid, key, value)
-}
-
-Process.prototype.doDrawChart = function(chartid) {
-	Charts.drawChart(chartid);
+// TODO returns what callback returns, yo.  Which can't work with setTimeout...
+//  we need to do this the snap way, eventually.
+Charts.call_when_initialized = function(callback) {
+	// invoke callback when google has loaded is true;
+	if (Charts.win) {
+		//Charts.win.ChartUtil.initialize();
+		if (Charts.win.ChartUtil.isInitialized()) {
+			return callback.call();
+		} else {
+			// google hasn't loaded yet, unfortunately
+			setTimeout(function() {Charts.call_when_initialized(callback)}, 50);
+			// so, what to return?  eh, best guess.  fix this at some point
+			return ("Chart_" + Charts.win.ChartUtil.next_chart_id);
+		}
+	} else {
+		// this shouldn't ever happen, if showContainer() was call first 
+		throw Error ("Please try again; the Chart window hasn't loaded yet'.'")
+	}
 }
 
 
-
-//////
-
-
-
-Charts.addChartsOption = function(chartid, key, value) {
-	// is chartid valid?
-	
-	Charts.showContainer();
-	alert('addOption ' + chartid + " key " + key + " value " + value);	 
-}
-
-
-Charts.drawChart = function(chartid) {
-	alert('drawchart ' + chartid);
+Charts.getChartObj = function(chartid) {
+	// check if valid id, etc..
+	if (Charts.win) {
+		//someday
+		return null;
+	}
+	throw Error ("Invalid chart reference: " + chartid);
 }
 
 
@@ -103,20 +81,85 @@ Charts.drawChart = function(chartid) {
 
 
 Charts.reportScatterPlotXlistYlist = function(x_list, y_list) {
+	var callback = function() {
+		return Charts.win.reportScatterPlotXlistYlist(x_list, y_list);
+	}
+	
 	Charts.showContainer();
-	Charts.win.reportScatterPlotXlistYlist(x_list, y_list);
+	return Charts.call_when_initialized(callback);
 }
 
 
 Charts.reportHistogram = function(list) {
+	var invoke_f = function() {
+		return Charts.win.reportHistogram(list);
+	}
 	Charts.showContainer();
-	Charts.win.addHistogram(list, title);
+	return Charts.call_when_initialized(invoke_f);
 }
 
 
 
-Charts.reportBarChart = function(list) {
+Charts.reportBarChart = function(lol) {
+	var invoke_f = function() {
+		return Charts.win.reportBarChart(lol);
+	}
 	Charts.showContainer();
-	Charts.win.addHistogram(list, title);
+	var chartid = Charts.call_when_initialized(invoke_f);
 }
+
+
+
+//////
+
+
+
+Charts.doAddChartsOption = function(chartid, key, value) {
+	// will throw error if invalid chartid
+	Charts.getChartObj(chartid);
+
+	throw Error("Add charts option not yet implemented");
+}
+
+
+Charts.doDrawChart = function(chartid) {
+	// will throw error if invalid chartid
+	Charts.getChartObj(chartid);
+	Charts.showContainer();
+	
+	throw Error("Draw not yet implemented");
+}
+
+
+
+
+
+
+
+///////////////
+// would be in threads.js -- to be removed when these are custom blocks
+//   hitting JSApply
+
+Process.prototype.reportScatterPlotXlistYlist = function(x_list, y_list) {
+	return Charts.reportScatterPlotXlistYlist(x_list, y_list);
+}
+
+Process.prototype.reportHistogram = function(list) {
+	return Charts.reportHistogram(list);
+}
+
+Process.prototype.reportBarChart = function(lol) {
+	return Charts.reportBarChart(lol);
+}
+
+Process.prototype.doAddChartOption = function(chartid, key, value) {
+	Charts.doAddChartOption(chartid, key, value)
+}
+
+Process.prototype.doDrawChart = function(chartid) {
+	Charts.doDrawChart(chartid);
+}
+
+
+
 
