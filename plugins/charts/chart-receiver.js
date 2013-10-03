@@ -130,7 +130,7 @@ ChartType.prototype.makeChartDiv = function(title, caption) {
 	var anchor;
 	var chart_div;
 
-	anchor = '<a href="#' + this.getChartId() + '"></> '
+	anchor = '<a href="#' + this.getChartId() + '"></a> '
 	if (title) {
 		title_div = ' <div class="title">' + title + '</div> ';
 	}
