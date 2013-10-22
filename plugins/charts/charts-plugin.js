@@ -5,6 +5,7 @@
 
 function Charts() {};
 Charts.prototype = new Plugin('charts');
+google.load('visualization', '1.0', {'packages' : ['corechart']});
 
 
 

@@ -448,17 +448,18 @@ function BarChart(lol) {
 
 	this.chartid = getNextChartId();
 
-	// these are objects with 'header' and 'values' fields
+	// get array of columns
 	var cs = lol.asArray();
 	for (i = 0; i<cs.length; i++) {
 		cs[i] = this.processColumn(cs[i]);
 	}
 	this.cols_array = cs;
+	
 	throw Error("Bar Chart not yet implemented");
 
-	//this.n_excluded = 0;
-	//this.n_included = 0;
-	//this.g_datatable = this.makeGDataTable();
+	this.n_excluded = 0;
+	this.n_included = 0;
+	this.g_datatable = this.makeGDataTable();
 
 	//this.caption = this.getCaption();
 	//this.options = this.getInitialOptions();
@@ -468,6 +469,77 @@ function BarChart(lol) {
 	//this.setGChart(new google.visualization.ColumnChart(document.getElementById(this.chartid)) );
 	//this.draw();
 };
+
+
+BarChart.prototype.makeGDataTable = function() {
+	var g_datatable = new google.visualization.DataTable();
+	var arrs = [];  // array of data arrays (['values'] from columns)
+	var cats = [];   // categories -- unique values or a bar
+	var cnts = {};   // category (key) : array of counts for each data_array (value)
+	var i, r, c, temp_arr, temp_val;
+	var maxlen = 0;
+	
+	// set up arrs, determine maxlen
+	// WAIT -- SHOULD WE ACCEPT ALL VALUES FROM COLUMS, OR
+    //  DO ROW-WISE MISSING DATA??
+	for (c=0; c<this.cols_array.length; c++) {
+		arrs[c] = this.cols_array[c]['values'];
+		if (arrs[c].length > maxlen) {
+			maxlen = arrs[c].length;
+		}
+	}
+	
+	
+	// do a row at a time 
+	for (r=0; r<maxlen; r++) {
+		// and look at each column in this row
+		for (c=0; c<arrs.length; c++) {
+			if (r < arr[c].length) {
+				// ok, this data array has a value to check
+				if (cats.contains(arr[c][r])) {
+					// we've seen a similar value before; so, add 1 to the right location in cnts
+					temp_arr = cnts[arr[c][r]];
+					temp_val = temp_arr[c];
+					temp_arr[c] = temp_val + 1;
+				} else {
+					// never see this value, new category needed
+					cats.push(arr[c][r]);
+					cnts[arr[c][r]] = new Array();
+					temp_arr = cnts[arr[c][r]];
+					for (i=0; i<this.cols_array.length; i++) {
+						// pre-populate this cnts array with 0s... makes me feel better
+						temp_arr[i] = 0;
+					}
+				}
+			}
+		}
+	} // that was fun
+	
+	// build the Data table
+	var row, cat, col;
+	// add the column 
+	row = new Array();
+	row[0] = "Categories";  // ? better name here?
+	for (c=0; c<arrs.length; c++) {
+		col = this.cols_array[c];
+		row[c+1] = col['header'];
+	}
+	g_datatable.addRow(row);
+	// add the counts
+	for (i=0; i< cats.length; i++) {
+		// cats[i] = category
+		row = new Array(); // data table row - header + counts for each category
+		cat = cats[i];  // the category
+		row.push(cat);  
+		temp_arr = cnts[cat];
+		for (c=0; c<arrs.length; c++) {
+			row[c+1] = temp_arr[c];
+		}
+		g_datatable.addRow(row);
+	}
+	
+	// well, there are no bugs in *that*.
+}
 
 
 
