@@ -185,7 +185,7 @@ SnapTranslator.dict.pt = {
     'translator_e-mail':
         'mmsequeira@gmail.com',
     'last_changed':
-        '2013-10-14',
+        '2013-11-12',
 
     // GUI
     // control bar:
@@ -420,7 +420,7 @@ SnapTranslator.dict.pt = {
     'when I am clicked':
         'Quando alguém clicar em ti',
     'when I receive %msgHat':
-        'Quando receberes %msgHat',
+        'Quando receberes a mensagem %msgHat',
     'broadcast %msg':
         'difunde a mensagem %msg',
     'broadcast %msg and wait':
@@ -450,7 +450,7 @@ SnapTranslator.dict.pt = {
     'stop block':
         'pára este guião de bloco',
     'stop script':
-        'pára este guião de actor',
+        'pára este guião de objecto',
     'stop all %stop':
         'pára tudo %stop',
     'pause all %pause':
@@ -470,9 +470,9 @@ SnapTranslator.dict.pt = {
     'when I start as a clone':
         'Quando fores criado como clone',
     'create a clone of %cln':
-        'clona o actor %cln',
+        'clona %cln',
     'myself':
-        'tu próprio',
+        '-te',
     'delete this clone':
         'remove-te',
 
@@ -1095,9 +1095,9 @@ SnapTranslator.dict.pt = {
 
     // trajes
     'Turtle':
-        'Seta',
+        'seta',
     'Empty':
-        'Vazio',
+        'vazio',
 
     // efeitos gráficos
     'ghost':

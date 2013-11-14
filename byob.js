@@ -101,11 +101,12 @@ Context, StringMorph, nop, newCanvas, radians, BoxMorph,
 ArrowMorph, PushButtonMorph, contains, InputSlotMorph, ShadowMorph,
 ToggleButtonMorph, IDE_Morph, MenuMorph, copy, ToggleElementMorph,
 Morph, fontHeight, StageMorph, SyntaxElementMorph, SnapSerializer,
-CommentMorph, localize, CSlotMorph, SpeechBubbleMorph, MorphicPreferences*/
+CommentMorph, localize, CSlotMorph, SpeechBubbleMorph, MorphicPreferences,
+SymbolMorph, isNil*/
 
 // Global stuff ////////////////////////////////////////////////////////
 
-modules.byob = '2013-October-04';
+modules.byob = '2013-November-12';
 
 // Declarations
 
@@ -136,7 +137,7 @@ function CustomBlockDefinition(spec, receiver) {
     this.isGlobal = false;
     this.type = 'command';
     this.spec = spec || '';
-    this.declarations = {}; // {'inputName' : [type, default]}
+    this.declarations = {}; // {'inputName' : [type, default, options]}
     this.comment = null;
     this.codeMapping = null; // experimental, generate text code
     this.codeHeader = null; // experimental, generate text code
@@ -191,6 +192,7 @@ CustomBlockDefinition.prototype.prototypeInstance = function () {
             if (slot) {
                 part.fragment.type = slot[0];
                 part.fragment.defaultValue = slot[1];
+                part.fragment.options = slot[2];
             }
         }
     });
@@ -264,6 +266,23 @@ CustomBlockDefinition.prototype.defaultValueOfInputIdx = function (idx) {
     return this.defaultValueOf(inputName);
 };
 
+CustomBlockDefinition.prototype.dropDownMenuOfInputIdx = function (idx) {
+    var inputName = this.inputNames()[idx];
+    return this.dropDownMenuOf(inputName);
+};
+
+CustomBlockDefinition.prototype.dropDownMenuOf = function (inputName) {
+    var dict = {};
+    if (this.declarations[inputName] && this.declarations[inputName][2]) {
+        this.declarations[inputName][2].split('\n').forEach(function (line) {
+            var pair = line.split('=');
+            dict[pair[0]] = isNil(pair[1]) ? pair[0] : pair[1];
+        });
+        return dict;
+    }
+    return null;
+};
+
 CustomBlockDefinition.prototype.inputNames = function () {
     var vNames = [],
         parts = this.parseSpec(this.spec);
@@ -333,6 +352,13 @@ CustomCommandBlockMorph.prototype.refresh = function () {
         this.fixBlockColor();
         this.fixLabelColor();
         this.restoreInputs(oldInputs);
+    } else { // update all input slots' drop-downs
+        this.inputs().forEach(function (inp, i) {
+            if (inp instanceof InputSlotMorph) {
+                inp.choices = def.dropDownMenuOfInputIdx(i);
+                inp.fixLayout();
+            }
+        });
     }
 
     // find unnahmed upvars and label them
@@ -536,8 +562,11 @@ CustomCommandBlockMorph.prototype.declarationsFromFragments = function () {
 
     this.parts().forEach(function (part) {
         if (part instanceof BlockInputFragmentMorph) {
-            ans[part.fragment.labelString] =
-                [part.fragment.type, part.fragment.defaultValue];
+            ans[part.fragment.labelString] = [
+                part.fragment.type,
+                part.fragment.defaultValue,
+                part.fragment.options
+            ];
         }
     });
     return ans;
@@ -1858,6 +1887,7 @@ function BlockLabelFragment(labelString) {
     this.labelString = labelString || '';
     this.type = '%s';    // null for label, a spec for an input
     this.defaultValue = '';
+    this.options = '';
     this.isDeleted = false;
 }
 
@@ -1907,6 +1937,7 @@ BlockLabelFragment.prototype.copy = function () {
     var ans = new BlockLabelFragment(this.labelString);
     ans.type = this.type;
     ans.defaultValue = this.defaultValue;
+    ans.options = this.options;
     return ans;
 };
 
@@ -2065,6 +2096,33 @@ BlockLabelFragmentMorph.prototype.updateBlockLabel = function (newFragment) {
     if (prot) {
         prot.refreshPrototype();
     }
+};
+
+BlockLabelFragmentMorph.prototype.userMenu = function () {
+    // show a menu of built-in special symbols
+    var myself = this,
+        symbolColor = new Color(100, 100, 130),
+        menu = new MenuMorph(
+            function (string) {
+                var tuple = myself.text.split('-');
+                myself.changed();
+                tuple[0] = '$' + string;
+                myself.text = tuple.join('-');
+                myself.fragment.labelString = myself.text;
+                myself.drawNew();
+                myself.changed();
+            },
+            null,
+            this,
+            this.fontSize
+        );
+    SymbolMorph.prototype.names.forEach(function (name) {
+        menu.addItem(
+            [new SymbolMorph(name, menu.fontSize, symbolColor), name],
+            name
+        );
+    });
+    return menu;
 };
 
 // BlockLabelPlaceHolderMorph ///////////////////////////////////////////////
@@ -2268,6 +2326,7 @@ InputSlotDialogMorph.prototype.init = function (
 
     // additional properties:
     this.fragment = fragment || new BlockLabelFragment();
+    this.textfield = null;
     this.types = null;
     this.slots = null;
     this.isExpanded = false;
@@ -2293,6 +2352,7 @@ InputSlotDialogMorph.prototype.init = function (
     this.add(this.slots);
     this.createSlotTypeButtons();
     this.fixSlotsLayout();
+    this.addSlotsMenu();
     this.createTypeButtons();
     this.fixLayout();
 };
@@ -2369,6 +2429,8 @@ InputSlotDialogMorph.prototype.addBlockTypeButton
     = BlockDialogMorph.prototype.addBlockTypeButton;
 
 InputSlotDialogMorph.prototype.setType = function (fragmentType) {
+    this.textfield.choices = fragmentType ? null : this.symbolMenu;
+    this.textfield.drawNew();
     this.fragment.type = fragmentType || null;
     this.types.children.forEach(function (c) {
         c.refresh();
@@ -2459,6 +2521,9 @@ InputSlotDialogMorph.prototype.open = function (
     var txt = new InputFieldMorph(defaultString),
         oldFlag = Morph.prototype.trackChanges;
 
+    if (!this.fragment.type) {
+        txt.choices = this.symbolMenu;
+    }
     Morph.prototype.trackChanges = false;
     this.isExpanded = this.isLaunchingExpanded;
     txt.setWidth(250);
@@ -2467,6 +2532,7 @@ InputSlotDialogMorph.prototype.open = function (
     if (pic) {this.setPicture(pic); }
     this.addBody(txt);
     txt.drawNew();
+    this.textfield = txt;
     this.addButton('ok', 'OK');
     if (!noDeleteButton) {
         this.addButton('deleteFragment', 'Delete');
@@ -2479,6 +2545,19 @@ InputSlotDialogMorph.prototype.open = function (
     this.add(this.types); // make the types come to front
     Morph.prototype.trackChanges = oldFlag;
     this.changed();
+};
+
+InputSlotDialogMorph.prototype.symbolMenu = function () {
+    var symbols = [],
+        symbolColor = new Color(100, 100, 130),
+        myself = this;
+    SymbolMorph.prototype.names.forEach(function (symbol) {
+        symbols.push([
+            [new SymbolMorph(symbol, myself.fontSize, symbolColor), symbol],
+            '$' + symbol
+        ]);
+    });
+    return symbols;
 };
 
 InputSlotDialogMorph.prototype.deleteFragment = function () {
@@ -2746,6 +2825,38 @@ InputSlotDialogMorph.prototype.fixSlotsLayout = function () {
     );
     Morph.prototype.trackChanges = oldFlag;
     this.slots.changed();
+};
+
+InputSlotDialogMorph.prototype.addSlotsMenu = function () {
+    var myself = this;
+
+    this.slots.userMenu = function () {
+        if (contains(['%s', '%n', '%txt', '%anyUE'], myself.fragment.type)) {
+            var menu = new MenuMorph(myself);
+            menu.addItem('options...', 'editSlotOptions');
+            return menu;
+        }
+        return Morph.prototype.userMenu.call(myself);
+    };
+};
+
+InputSlotDialogMorph.prototype.editSlotOptions = function () {
+    var myself = this;
+    new DialogBoxMorph(
+        myself,
+        function (options) {
+            myself.fragment.options = options;
+        },
+        myself
+    ).promptCode(
+        'Input Slot Options',
+        myself.fragment.options,
+        myself.world(),
+        null,
+        'Enter one option per line.' +
+            'Optionally use "=" as key/value delimiter\n' +
+            'e.g.\n   the answer=42'
+    );
 };
 
 // InputSlotDialogMorph hiding and showing:
