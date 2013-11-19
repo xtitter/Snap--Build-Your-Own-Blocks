@@ -436,6 +436,7 @@ Histogram.prototype.getInitialOptions = function() {
 
 ////////////
 
+// takes a list of lists, obviously.
 reportBarChart = function(lol) {
 	var bc = new BarChart(lol);
 	return bc.getChartId();
