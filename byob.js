@@ -106,7 +106,7 @@ SymbolMorph, isNil*/
 
 // Global stuff ////////////////////////////////////////////////////////
 
-modules.byob = '2014-January-10';
+modules.byob = '2014-April-30';
 
 // Declarations
 
@@ -167,6 +167,9 @@ CustomBlockDefinition.prototype.templateInstance = function () {
     var block;
     block = this.blockInstance();
     block.refreshDefaults();
+    if (!block.zebraContrast) {
+        block.forceNormalColoring(); // label still is wrong
+    }
     block.isDraggable = false;
     block.isTemplate = true;
     return block;
@@ -2579,7 +2582,10 @@ InputSlotDialogMorph.prototype.symbolMenu = function () {
         myself = this;
     SymbolMorph.prototype.names.forEach(function (symbol) {
         symbols.push([
-            [new SymbolMorph(symbol, myself.fontSize, symbolColor), symbol],
+            [
+                new SymbolMorph(symbol, myself.fontSize, symbolColor),
+                localize(symbol)
+            ],
             '$' + symbol
         ]);
     });
