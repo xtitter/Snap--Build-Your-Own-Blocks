@@ -7,7 +7,7 @@
     written by Jens Mönig
     jens@moenig.org
 
-    Copyright (C) 2013 by Jens Mönig
+    Copyright (C) 2014 by Jens Mönig
 
     This file is part of Snap!.
 
@@ -61,7 +61,7 @@ SyntaxElementMorph*/
 
 // Global stuff ////////////////////////////////////////////////////////
 
-modules.store = '2013-November-15';
+modules.store = '2014-Jun-04';
 
 
 // XML_Serializer ///////////////////////////////////////////////////////
@@ -263,7 +263,9 @@ SnapSerializer.prototype.watcherLabels = {
     getScale: 'size',
     getLastAnswer: 'answer',
     getTimer: 'timer',
-    getCostumeIdx: 'costume #'
+    getCostumeIdx: 'costume #',
+    reportMouseX: 'mouse x',
+    reportMouseY: 'mouse y'
 };
 
 // SnapSerializer instance creation:
@@ -375,7 +377,18 @@ SnapSerializer.prototype.loadProjectModel = function (xmlNode) {
         project.pentrails.src = model.pentrails.contents;
     }
     project.stage.setTempo(model.stage.attributes.tempo);
+    StageMorph.prototype.dimensions = new Point(480, 360);
+    if (model.stage.attributes.width) {
+        StageMorph.prototype.dimensions.x =
+            Math.max(+model.stage.attributes.width, 480);
+    }
+    if (model.stage.attributes.height) {
+        StageMorph.prototype.dimensions.y =
+            Math.max(+model.stage.attributes.height, 180);
+    }
     project.stage.setExtent(StageMorph.prototype.dimensions);
+    SpriteMorph.prototype.useFlatLineEnds =
+        model.stage.attributes.lines === 'flat';
     project.stage.isThreadSafe =
         model.stage.attributes.threadsafe === 'true';
     StageMorph.prototype.enableCodeMapping =
@@ -444,8 +457,6 @@ SnapSerializer.prototype.loadProjectModel = function (xmlNode) {
         }
     });
 
-    this.objects = {};
-
     /* Global Variables */
 
     if (model.globalVariables) {
@@ -454,6 +465,8 @@ SnapSerializer.prototype.loadProjectModel = function (xmlNode) {
             model.globalVariables
         );
     }
+
+    this.objects = {};
 
     /* Watchers */
 
@@ -508,7 +521,7 @@ SnapSerializer.prototype.loadProjectModel = function (xmlNode) {
             ))
         );
         project.stage.add(watcher);
-        watcher.update();
+        watcher.onNextStep = function () {this.currentValue = null; };
 
         // set watcher's contentsMorph's extent if it is showing a list and
         // its monitor dimensions are given
@@ -1019,7 +1032,7 @@ SnapSerializer.prototype.loadInput = function (model, input, block) {
         input.setColor(this.loadColor(model.contents));
     } else {
         val = this.loadValue(model);
-        if (val) {
+        if (!isNil(val) && input.setContents) {
             input.setContents(this.loadValue(model));
         }
     }
@@ -1289,6 +1302,12 @@ SnapSerializer.prototype.openProject = function (project, ide) {
     ide.createCorral();
     ide.selectSprite(sprite);
     ide.fixLayout();
+
+    // force watchers to update
+    //project.stage.watchers().forEach(function (watcher) {
+    //  watcher.onNextStep = function () {this.currentValue = null;};
+    //})
+
     ide.world().keyboardReceiver = project.stage;
 };
 
@@ -1337,7 +1356,9 @@ StageMorph.prototype.toXML = function (serializer) {
         '<project name="@" app="@" version="@">' +
             '<notes>$</notes>' +
             '<thumbnail>$</thumbnail>' +
-            '<stage name="@" costume="@" tempo="@" threadsafe="@" ' +
+            '<stage name="@" width="@" height="@" ' +
+            'costume="@" tempo="@" threadsafe="@" ' +
+            'lines="@" ' +
             'codify="@" ' +
             'scheduled="@" ~>' +
             '<pentrails>$</pentrails>' +
@@ -1359,9 +1380,12 @@ StageMorph.prototype.toXML = function (serializer) {
         (ide && ide.projectNotes) ? ide.projectNotes : '',
         thumbdata,
         this.name,
+        StageMorph.prototype.dimensions.x,
+        StageMorph.prototype.dimensions.y,
         this.getCostumeIdx(),
         this.getTempo(),
         this.isThreadSafe,
+        SpriteMorph.prototype.useFlatLineEnds ? 'flat' : 'round',
         this.enableCodeMapping,
         StageMorph.prototype.frameRate !== 0,
         this.trailsCanvas.toDataURL('image/png'),
