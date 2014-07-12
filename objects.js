@@ -1135,17 +1135,32 @@ SpriteMorph.prototype.initBlocks = function () {
         },
         
         
-        // Plugin stuff
-        reportRequirePlugin: {  
-        	type: 'reporter',
-        	category: 'operators',
-        	spec: 'Require Plugin %s'
-        },
-        doJSApply: {  
+        // // Plugin stuff
+        // reportRequirePlugin: {  
+        	// type: 'reporter',
+        	// category: 'operators',
+        	// spec: 'Require Plugin %s'
+        // },
+        // doJSApply: {  
+        	// type: 'command',
+        	// category: 'operators',
+        	// spec: 'Plugin %s apply %s'
+        // },
+        
+        // for now, should be replaced by doJSApple
+        doJSEval: {
         	type: 'command',
         	category: 'operators',
-        	spec: 'Plugin %s apply %s'
+        	spec: 'JavaScript eval %s'
+  
         },
+        
+        reportNormalRV: {
+        	type: 'reporter',
+        	category: 'sensing',
+        	spec: 'Normal random number'
+ 
+        }, 
         
         
 		// frontend to Google Chart, experimental
@@ -1901,6 +1916,7 @@ SpriteMorph.prototype.blockTemplates = function (category) {
         blocks.push(block('doSetFastTracking'));
         blocks.push('-');
         blocks.push(block('reportDate'));
+        blocks.push(block('reportNormalRV'));
 
     // for debugging: ///////////////
 
@@ -1971,8 +1987,9 @@ SpriteMorph.prototype.blockTemplates = function (category) {
             blocks.push('-');
             blocks.push(block('reportTypeOf'));
             blocks.push(block('reportTextFunction'));
-            blocks.push(block('reportRequirePlugin'));
-            blocks.push(block('doJSApply'));
+            //blocks.push(block('reportRequirePlugin'));
+            //blocks.push(block('doJSApply'));
+            blocks.push(block('doJSeval'));
         }
 
     /////////////////////////////////
@@ -4945,6 +4962,7 @@ StageMorph.prototype.blockTemplates = function (category) {
         blocks.push(block('doSetFastTracking'));
         blocks.push('-');
         blocks.push(block('reportDate'));
+        blocks.push(block('reportNormalRV'));
 
     // for debugging: ///////////////
 
@@ -5017,8 +5035,9 @@ StageMorph.prototype.blockTemplates = function (category) {
             blocks.push('-');
             blocks.push(block('reportTypeOf'));
             blocks.push(block('reportTextFunction'));
-            blocks.push(block('reportRequirePlugin'));
-            blocks.push(block('doJSApply'));
+            //blocks.push(block('reportRequirePlugin'));
+            //blocks.push(block('doJSApply'));
+            blocks.push(block('doJSeval'));
         }
 
     //////////////////////////////////
