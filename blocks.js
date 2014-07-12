@@ -9,7 +9,7 @@
     written by Jens Mönig
     jens@moenig.org
 
-    Copyright (C) 2013 by Jens Mönig
+    Copyright (C) 2014 by Jens Mönig
 
     This file is part of Snap!.
 
@@ -155,7 +155,8 @@ DialogBoxMorph, BlockInputFragmentMorph, PrototypeHatBlockMorph, Costume*/
 
 // Global stuff ////////////////////////////////////////////////////////
 
-modules.blocks = '2013-November-15';
+modules.blocks = '2014-July-08';
+
 
 var SyntaxElementMorph;
 var BlockMorph;
@@ -812,6 +813,24 @@ SyntaxElementMorph.prototype.labelPart = function (spec) {
                 true // read-only
             );
             break;
+        case '%dates':
+            part = new InputSlotMorph(
+                null, // text
+                false, // non-numeric
+                {
+                    'year' : ['year'],
+                    'month' : ['month'],
+                    'date' : ['date'],
+                    'day of week' : ['day of week'],
+                    'hour' : ['hour'],
+                    'minute' : ['minute'],
+                    'second' : ['second'],
+                    'time in milliseconds' : ['time in milliseconds']
+                },
+                true // read-only
+            );
+            part.setContents(['date']);
+            break;
         case '%delim':
             part = new InputSlotMorph(
                 null, // text
@@ -894,17 +913,13 @@ SyntaxElementMorph.prototype.labelPart = function (spec) {
             part = new InputSlotMorph(
                 null,
                 false,
-                {
-                /*
-                    color : 'color',
-                    fisheye : 'fisheye',
-                    whirl : 'whirl',
-                    pixelate : 'pixelate',
-                    mosaic : 'mosaic',
-                    brightness : 'brightness',
-                */
-                    ghost : ['ghost']
-                },
+                {   brightness : ['brightness'],
+                    ghost : ['ghost'],
+                    negative : ['negative'],
+                    comic: ['comic'],
+                    duplicate: ['duplicate'],
+                    confetti: ['confetti']
+                    },
                 true
             );
             part.setContents(['ghost']);
@@ -996,7 +1011,6 @@ SyntaxElementMorph.prototype.labelPart = function (spec) {
                 'attributesMenu',
                 true
             );
-            part.isStatic = true;
             break;
         case '%fun':
             part = new InputSlotMorph(
@@ -1037,6 +1051,33 @@ SyntaxElementMorph.prototype.labelPart = function (spec) {
                 true
             );
             part.setContents(['encode URI']);
+            break;
+        case '%stopChoices':
+            part = new InputSlotMorph(
+                null,
+                false,
+                {
+                    'all' : ['all'],
+                    'this script' : ['this script'],
+                    'this block' : ['this block']
+                },
+                true
+            );
+            part.setContents(['all']);
+            part.isStatic = true;
+            break;
+        case '%stopOthersChoices':
+            part = new InputSlotMorph(
+                null,
+                false,
+                {
+                    'all but this script' : ['all but this script'],
+                    'other scripts in sprite' : ['other scripts in sprite']
+                },
+                true
+            );
+            part.setContents(['all but this script']);
+            part.isStatic = true;
             break;
         case '%typ':
             part = new InputSlotMorph(
@@ -1166,7 +1207,6 @@ SyntaxElementMorph.prototype.labelPart = function (spec) {
             );
             break;
 
-
     // symbols:
 
         case '%turtle':
@@ -1239,7 +1279,7 @@ SyntaxElementMorph.prototype.labelPart = function (spec) {
             part.drawNew();
             break;
         default:
-            // nop();
+            nop();
         }
     } else if (spec[0] === '$' &&
             spec.length > 1 &&
@@ -1587,6 +1627,12 @@ SyntaxElementMorph.prototype.showBubble = function (value) {
         isClickable = true;
     } else if (value instanceof Morph) {
         img = value.fullImage();
+        morphToShow = new Morph();
+        morphToShow.silentSetWidth(img.width);
+        morphToShow.silentSetHeight(img.height);
+        morphToShow.image = img;
+    } else if (value instanceof Costume) {
+        img = value.thumbnail(new Point(40, 40));
         morphToShow = new Morph();
         morphToShow.silentSetWidth(img.width);
         morphToShow.silentSetHeight(img.height);
@@ -1963,6 +2009,7 @@ BlockMorph.prototype.userMenu = function () {
     var menu = new MenuMorph(this),
         world = this.world(),
         myself = this,
+        alternatives,
         blck;
 
     menu.addItem(
@@ -1970,22 +2017,24 @@ BlockMorph.prototype.userMenu = function () {
         'showHelp'
     );
     if (this.isTemplate) {
-        if (this.selector !== 'evaluateCustomBlock') {
-            menu.addItem(
-                "hide",
-                'hidePrimitive'
-            );
-        }
-        if (StageMorph.prototype.enableCodeMapping) {
-            menu.addLine();
-            menu.addItem(
-                'header mapping...',
-                'mapToHeader'
-            );
-            menu.addItem(
-                'code mapping...',
-                'mapToCode'
-            );
+        if (!(this.parent instanceof SyntaxElementMorph)) {
+            if (this.selector !== 'evaluateCustomBlock') {
+                menu.addItem(
+                    "hide",
+                    'hidePrimitive'
+                );
+            }
+            if (StageMorph.prototype.enableCodeMapping) {
+                menu.addLine();
+                menu.addItem(
+                    'header mapping...',
+                    'mapToHeader'
+                );
+                menu.addItem(
+                    'code mapping...',
+                    'mapToCode'
+                );
+            }
         }
         return menu;
     }
@@ -2018,6 +2067,14 @@ BlockMorph.prototype.userMenu = function () {
                 );
             }
         );
+    } else if (this.definition && this.alternatives) { // custom block
+        alternatives = this.alternatives();
+        if (alternatives.length > 0) {
+            menu.addItem(
+                'relabel...',
+                function () {myself.relabel(alternatives); }
+            );
+        }
     }
 
     menu.addItem(
@@ -2053,6 +2110,7 @@ BlockMorph.prototype.userMenu = function () {
     if (this.parentThatIsA(RingMorph)) {
         menu.addLine();
         menu.addItem("unringify", 'unringify');
+        menu.addItem("ringify", 'ringify');
         return menu;
     }
     if (this.parent instanceof ReporterSlotMorph
@@ -2099,16 +2157,18 @@ BlockMorph.prototype.developersMenu = function () {
 
 BlockMorph.prototype.hidePrimitive = function () {
     var ide = this.parentThatIsA(IDE_Morph),
+        dict,
         cat;
     if (!ide) {return; }
     StageMorph.prototype.hiddenPrimitives[this.selector] = true;
-    cat = {
+    dict = {
         doWarp: 'control',
         reifyScript: 'operators',
         reifyReporter: 'operators',
         reifyPredicate: 'operators',
         doDeclareVariables: 'variables'
-    }[this.selector] || this.category;
+    };
+    cat = dict[this.selector] || this.category;
     if (cat === 'lists') {cat = 'variables'; }
     ide.flushBlocksCache(cat);
     ide.refreshPalette();
@@ -2216,6 +2276,7 @@ BlockMorph.prototype.relabel = function (alternativeSelectors) {
     alternativeSelectors.forEach(function (sel) {
         var block = SpriteMorph.prototype.blockForSelector(sel);
         block.restoreInputs(oldInputs);
+        block.fixBlockColor(null, true);
         block.addShadow(new Point(3, 3));
         menu.addItem(
             block,
@@ -2235,7 +2296,7 @@ BlockMorph.prototype.setSelector = function (aSelector) {
     var oldInputs = this.inputs(),
         info;
     info = SpriteMorph.prototype.blocks[aSelector];
-    this.category = info.category;
+    this.setCategory(info.category);
     this.selector = aSelector;
     this.setSpec(localize(info.spec));
     this.restoreInputs(oldInputs);
@@ -2247,6 +2308,7 @@ BlockMorph.prototype.restoreInputs = function (oldInputs) {
     // try to restore my previous inputs when my spec has been changed
     var i = 0,
         old,
+        nb,
         myself = this;
 
     this.inputs().forEach(function (inp) {
@@ -2254,7 +2316,17 @@ BlockMorph.prototype.restoreInputs = function (oldInputs) {
         if (old instanceof ReporterBlockMorph) {
             myself.silentReplaceInput(inp, old.fullCopy());
         } else if (old && inp instanceof InputSlotMorph) {
-            inp.setContents(old.evaluate());
+            // original - turns empty numberslots to 0:
+            // inp.setContents(old.evaluate());
+            // "fix" may be wrong b/c constants
+            if (old.contents) {
+                inp.setContents(old.contents().text);
+            }
+        } else if (old instanceof CSlotMorph && inp instanceof CSlotMorph) {
+            nb = old.nestedBlock();
+            if (nb) {
+                inp.nestedBlock(nb.fullCopy());
+            }
         }
         i += 1;
     });
@@ -3262,6 +3334,7 @@ CommandBlockMorph.prototype.snap = function () {
 
 CommandBlockMorph.prototype.isStop = function () {
     return ([
+        'doStopThis',
         'doStop',
         'doStopBlock',
         'doStopAll',
@@ -3274,9 +3347,44 @@ CommandBlockMorph.prototype.isStop = function () {
 // CommandBlockMorph deleting
 
 CommandBlockMorph.prototype.userDestroy = function () {
+    if (this.nextBlock()) {
+        this.userDestroyJustThis();
+        return;
+    }
     var cslot = this.parentThatIsA(CSlotMorph);
     this.destroy();
     if (cslot) {
+        cslot.fixLayout();
+    }
+};
+
+CommandBlockMorph.prototype.userDestroyJustThis = function () {
+    // delete just this one block, reattach next block to the previous one,
+    var scripts = this.parentThatIsA(ScriptsMorph),
+        cs = this.parentThatIsA(CommandSlotMorph),
+        pb,
+        nb = this.nextBlock(),
+        above,
+        cslot = this.parentThatIsA(CSlotMorph);
+
+    if (this.parent) {
+        pb = this.parent.parentThatIsA(CommandBlockMorph);
+    }
+    if (pb && (pb.nextBlock() === this)) {
+        above = pb;
+    } else if (cs && (cs.nestedBlock() === this)) {
+        above = cs;
+    }
+    this.destroy();
+    if (nb) {
+        if (above instanceof CommandSlotMorph) {
+            above.nestedBlock(nb);
+        } else if (above instanceof CommandBlockMorph) {
+            above.nextBlock(nb);
+        } else {
+            scripts.add(nb);
+        }
+    } else if (cslot) {
         cslot.fixLayout();
     }
 };
@@ -4901,6 +5009,14 @@ ScriptsMorph.prototype.cleanUp = function () {
 };
 
 ScriptsMorph.prototype.exportScriptsPicture = function () {
+    var pic = this.scriptsPicture();
+    if (pic) {
+        window.open(pic.toDataURL());
+    }
+};
+
+ScriptsMorph.prototype.scriptsPicture = function () {
+    // private - answer a canvas containing the pictures of all scripts
     var boundingBox, pic, ctx;
     if (this.children.length === 0) {return; }
     boundingBox = this.children[0].fullBounds();
@@ -4921,7 +5037,7 @@ ScriptsMorph.prototype.exportScriptsPicture = function () {
             );
         }
     });
-    window.open(pic.toDataURL());
+    return pic;
 };
 
 ScriptsMorph.prototype.addComment = function () {
@@ -5260,7 +5376,7 @@ CommandSlotMorph.prototype.evaluate = function () {
 };
 
 CommandSlotMorph.prototype.isEmptySlot = function () {
-    return this.nestedBlock() === null;
+    return !this.isStatic && (this.nestedBlock() === null);
 };
 
 // CommandSlotMorph context menu ops
@@ -6142,7 +6258,7 @@ CSlotMorph.prototype.drawBottomEdge = function (context) {
     I am an editable text input slot. I can be either rectangular or
     rounded, and can have an optional drop-down menu. If I'm set to
     read-only I must have a drop-down menu and will assume a darker
-    shade of my    parent's color.
+    shade of my parent's color.
 
     my most important public attributes and accessors are:
 
@@ -6297,6 +6413,8 @@ InputSlotMorph.prototype.dropDownMenu = function () {
         if (Object.prototype.hasOwnProperty.call(choices, key)) {
             if (key[0] === '~') {
                 menu.addLine();
+            // } else if (key.indexOf('§_def') === 0) {
+            //     menu.addItem(choices[key].blockInstance(), choices[key]);
             } else {
                 menu.addItem(key, choices[key]);
             }
@@ -6386,7 +6504,7 @@ InputSlotMorph.prototype.collidablesMenu = function () {
         allNames = [];
 
     stage.children.forEach(function (morph) {
-        if (morph instanceof SpriteMorph) {
+        if (morph instanceof SpriteMorph && !morph.isClone) {
             if (morph.name !== rcvr.name) {
                 allNames = allNames.concat(morph.name);
             }
@@ -6513,6 +6631,11 @@ InputSlotMorph.prototype.attributesMenu = function () {
             dict[name] = name;
         });
     }
+    /*
+    obj.customBlocks.forEach(function (def, i) {
+        dict['§_def' + i] = def
+    });
+    */
     return dict;
 };
 
@@ -10531,7 +10654,7 @@ CommentMorph.prototype.userMenu = function () {
     );
     menu.addItem("delete", 'destroy');
     menu.addItem(
-        "picture...",
+        "comment pic...",
         function () {
             window.open(myself.fullImage().toDataURL());
         },

@@ -36,12 +36,16 @@
 			var world;
 			window.onload = function () {
 				world = new WorldMorph(document.getElementById('world'));
+                world.worldCanvas.focus();
 				new IDE_Morph().openIn(world);
 				setInterval(loop, 1);
 			};
 			function loop() {
 				world.doOneCycle();
 			}
+		</script>
+		<script type="text/javascript">
+		     Charts.newContainer();
 		</script>
 	</head>
 	<body style="margin: 0;">

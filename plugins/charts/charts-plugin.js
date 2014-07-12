@@ -10,7 +10,6 @@ google.load('visualization', '1.0', {'packages' : ['corechart']});
 
 
 
-
 ////////////
 // 
 
@@ -161,5 +160,37 @@ Process.prototype.doDrawChart = function(chartid) {
 }
 
 
+
+
+
+/////////////////
+//  random numbers
+
+Charts.lastNormalRV = null;
+
+Charts.reportNormalRV = function() {
+	// 
+	if (this.lastNormalRV != null) {
+		var temp = this.lastNormalRV;
+		this.lastNormalRV = null;
+		return temp;
+	} else {
+		// Marsallia Polar
+		var outofrange = true;
+		var u, v, s;
+		while (outofrange) {
+			u = ((2 * Math.random()) - 1);   // [-1, 1]
+			v = ((2 * Math.random()) - 1);
+			s = ((u * u) + (v * v));
+			outofrange = (s > 1);
+		}
+		this.lastNormalRV = u * Math.sqrt(-2 * Math.log(s) / s)
+		return (v * Math.sqrt(-2 * Math.log(s) / s));
+	}
+}
+
+Process.prototype.reportNormalRV = function() {
+	return(Charts.reportNormalRV());
+}
 
 

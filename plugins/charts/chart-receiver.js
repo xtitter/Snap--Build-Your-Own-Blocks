@@ -456,7 +456,7 @@ function BarChart(lol) {
 	}
 	this.cols_array = cs;
 	
-	throw Error("Bar Chart not yet implemented");
+	throw Error("Bar Chart not yet implemented");  // need to test first!
 
 	this.n_excluded = 0;
 	this.n_included = 0;
